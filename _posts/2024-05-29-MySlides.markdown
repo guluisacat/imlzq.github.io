@@ -1,0 +1,8 @@
+---
+layout: post
+title: "My Slides"
+date: 2024-05-29 11:48:58 +0800
+categories: slides
+---
+
+Check out my slides at [https://github.com/guluisacat/MySlides](https://github.com/guluisacat/MySlides).
