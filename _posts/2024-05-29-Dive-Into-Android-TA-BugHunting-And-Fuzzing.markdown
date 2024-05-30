@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "(EN) Dive into Android TA Bug Hunting And Fuzzing"
+title: "Dive into Android TA Bug Hunting And Fuzzing"
 date: 2024-05-29 13:48:58 +0800
 categories:
  - Android
@@ -15,9 +15,9 @@ The presentation was selected by `OffensiveCon 2023`, but due to certain restric
 
 The topic was first presented at [Kanxue SDC 2023 in Shanghai, China on October 23, 2023](https://mp.weixin.qq.com/s/591Zt6Yk55i8ugOjC5Hy6w). Later, it was presented at the `Huawei Security Reward Program Annual Conference 2024` in Shenzhen, China on March 28, 2024. There were some minor changes in the Huawei presentation. I added a few previously undisclosed details.
 
-I was focusing on bug hunting and fuzzing on Android and IoT. However, when I disclosed the vulnerabilities, I found that Android OEMs have poor vulnerability disclosure policies and offer lower bug bounties. Even if I can achieve system or root LPE on Android OEMs, the bug bounty may only be $1k, and they don't want me to disclose the vulnerabilities or even mention that their products have vulnerabilities. Finding these vulnerabilities feels like doing charity work. Of course, Huawei is an exception; they handle vulnerability disclosure better and offer appropriate rewards.
+I was focusing on bug hunting and fuzzing on Android and IoT. However, when I disclosed the vulnerabilities, I found that Android OEMs have poor vulnerability disclosure policies and offer lower bug bounties. Even if I can achieve system or root LPE on Android, the bug bounty may only be $1k, and they don't want me to disclose the vulnerabilities or even mention that their products have vulnerabilities. Finding these vulnerabilities feels like doing charity work. Of course, Huawei is an exception; they handle vulnerability disclosure better and offer appropriate rewards.
 
-During this research, I built a system for simulating and fuzzing Android Trusted Applications based on `AFL+Unicorn`. I believe this system is general enough to be efficiently used for macOS/iOS vulnerability research as well. All I need to do is implement the syscalls and APIs for the macOS/iOS platform and use the appropriate architecture to simulate the firmware. Additionally, I've heard that Apple's vulnerability disclosure policy is more open and offers higher rewards, so I began shifting my research focus to Apple's products, such as macOS, starting in July 2023.
+During this research, I built a system for simulating and fuzzing Android Trusted Applications based on `AFL + Unicorn`. I believe this system is general enough to be efficiently used for macOS/iOS vulnerability research as well. All I need to do is implement the syscalls and APIs for the macOS/iOS platform and use the appropriate architecture to simulate the binaries. Additionally, I've heard that Apple's vulnerability disclosure policy is more open and offers higher rewards, so I began shifting my research focus to Apple's products, such as macOS, starting in July 2023.
 
 As a farewell to my previous research, I decided to restate this topic in English today.
 
@@ -141,7 +141,7 @@ Once the TEE receives the request, it loads the TA file into memory based on the
 
 Before introducing the TA lifecycle, we need to understand a specification known as the `GlobalPlatform TEE Client API Specification`. This specification can be simply understood as a standardized development process. 
 
-If developers follow this specification, they can develop their own Trusted Applications and Client Applications in a relatively short amount of time.
+If developers follow this specification, they can develop their own Trusted Applications and Client Applications quickly.
 
 
 
@@ -157,11 +157,11 @@ The `TA_CreateEntryPoint` and `TA_OpenSessionEntryPoint` stages are fundamentall
 
 The third function, `TA_InvokeCommandEntryPoint`, is our primary focus for analysis, as developers handle external data requests in this function. 
 
-Additionally, `TA_OpenSessionEntryPoint` also merits attention due to its capacity to accept external inputs, posing a potential vulnerability hotspot.
+Additionally,we need to care about `TA_OpenSessionEntryPoint` too because it can handle the external inputs as well, posing a potential vulnerability attack surface.
 
 
 
-As we can see below, the TEE relies on UUIDs to identify different TAs.
+**As we can see below, the TEE relies on UUIDs to identify different TAs.**
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-150833.png)
 
@@ -261,15 +261,15 @@ From my research, only Qualcomm and Kinibi have adopted custom formats for their
 
 For TAs from other manufacturers, they predominantly use the OP-TEE format, which is relatively straightforward to analyze. 
 
-By simply removing the original TA header, these files can be directly analyzed in tools like Ida.
+By simply removing the original TA header, these files can be directly analyzed in tools like `IDA Pro`.
 
 Although some vendors' TAs are encrypted and cannot be directly analyzed, once decrypted through certain methods, we can still find that they are based on the OP-TEE format.
 
  ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-155200.png)
 
-OP-TEE format TAs often include an `.elf` file header within their binary content. By simply removing the TA header preceding the `.elf` file header, IDA Pro can correctly interpret and analyze the file. 
+OP-TEE format TAs often include an `.elf` file header within their binary content. By simply removing the TA header preceding the `.elf` file header, `IDA Pro` can correctly interpret and analyze the file. 
 
-However, this approach is primarily suited for reverse engineering, as the TA header typically contains crucial information such as the TA's UUID and section data, which are essential for simulation. Therefore, for simulation purposes, we need to handle them on a case-by-case basis.
+However, this approach is primarily suited for reverse engineering, as the TA header typically contains crucial information such as the TA's UUID and section data, which are essential for simulation. Therefore, **for simulation purposes,** we need to handle them on a case-by-case basis.
 
  
 
@@ -312,9 +312,11 @@ In my research, I used the second and third methods to test.
 
 I would also like to share some of my previous research using the first method. Three years ago, I developed a semi-automated static vulnerability scanning tool. With a sufficiently rich vulnerability template, it can automatically identify all potential local system/root privilege escalation points. A simple manual audit can then swiftly reveal most local system or root privilege vulnerabilities. This tool combines the advantages of "text-based matching" and "static taint analysis" for vulnerability scanning, balancing both false negative and false positive rates. Although better vulnerability scanning solutions are now available, considering the development time cost for researchers, this tool still holds certain advantages and can be quickly developed within two weeks. 
 
+[https://mp.weixin.qq.com/s/lnmqVQl8YUT_mPQuwqn5RQ](https://mp.weixin.qq.com/s/lnmqVQl8YUT_mPQuwqn5RQ)
+
 However, my blog on that topic is currently only available in Chinese, and I suggest using ChatGPT for translation. Additionally, I appreciate the technical sharing from the researchers mentioned in the blog. My blog serves as a supplement to their shared content, providing positive feedback to the open-source community. Due to some reasons, I could not fully disclose the details in that blog and could only share some insights. I hope these insights are helpful to others.
 
-[https://mp.weixin.qq.com/s/lnmqVQl8YUT_mPQuwqn5RQ](https://mp.weixin.qq.com/s/lnmqVQl8YUT_mPQuwqn5RQ)
+
 
 
 
@@ -329,7 +331,7 @@ Since our goal at this moment is not to attack others but to create a research e
 
 
 
-### 3.3 Special Attention: Local Privilege Escalation Vulnerabilities Useful Only for Security Research
+### 3.3 Attention: Local Privilege Escalation Vulnerabilities Useful Only for Security Research
 
 1. Non-default configurations vulnerabilities
 
@@ -340,13 +342,13 @@ Since our goal at this moment is not to attack others but to create a research e
 
 4. Other security vulnerabilities requiring multiple user interactions
 
-A typical example is the `PendingIntent hijacking vulnerability` in notifications. 
+A typical example is the `PendingIntent hijacking vulnerability in notifications`. 
 
 Exploiting this vulnerability requires the user to grant `Notification Manager` permission to our app in the settings beforehand. This permission-granting action is considered a strong interaction. Even if we successfully hijack the PendingIntent and can send arbitrary intents with system-level privileges, the vulnerability will be downgraded to medium or low severity due to the prerequisite of strong user interaction.
 
 If a vulnerability requires multiple interactions, such as five or ten steps, vendors may not even fix it. 
 
-However, for security researchers, these vulnerabilities can become powerful tools for building our research environment.
+**However, for security researchers, these vulnerabilities can become powerful tools for building our research environment.**
 
 ### 3.4 Unlock Bootloaders
 
@@ -362,7 +364,7 @@ The prevalence of Nday exploits was surprisingly high, contrary to my initial ex
 
 **Why?**
 
-Let's take a moment to think carefully. If we aim to use Ndays for unlocking bootloaders to build our security research devices, do we need to target the latest flagship phones? Not necessarily. 
+Let's take a moment to think carefully. If we aim to use Nday vulnerbailities for unlocking bootloaders to build our security research devices, do we need to target the latest flagship phones? Not necessarily. 
 
 Our targets can be old phones or sub-brand phones with the latest OEM systems, as our goal is simply to have a device with the latest system.
 
@@ -372,7 +374,7 @@ Therefore, we can actually try a wide variety of attack surfaces. We're unconcer
 
 ### 3.5 Unlock Bootloaders: 0 Day + NDay 
 
-If we don't find a suitable target for Nday exploits, a combination of 0day and Nday exploits could be considered. 
+On the other hand, if we don't find a suitable target for Nday exploits, a combination of 0day and Nday exploits could be considered. 
 
 **Repairing vulnerabilities that can unlock Bootloaders differs from fixing common vulnerabilities.**
 
@@ -398,7 +400,7 @@ No.
 
 **Note: The vendors do not allow me to disclose the details of these vulnerabilities, so I have to omit this part.**
 
-Alternatively, I will introduce two attack surfaces.
+**Alternatively, I will introduce two attack surfaces.**
 
 
 
@@ -411,9 +413,9 @@ Alternatively, I will introduce two attack surfaces.
 
 **Mitigation Strategies:** 
 
-- Many OEMs have developed Windows clients to handle downgrade operations. These Windows clients obtain encrypted firmware packages from the server, decrypt them, and then push the decrypted packages to the mobile device. The mobile device then attempts to decrypt the encrypted packages.
-- If the received package is not encrypted, can we attempt to downgrade? 
-- Is the decryption and encryption process controlled by the client?
+- Many OEMs have developed Windows clients to handle downgrade operations. These Windows clients obtain encrypted firmware packages from the servers, decrypt them, and then push the decrypted packages to the mobile device. The mobile device then attempts to decrypt the encrypted packages.
+- If we obtain an unencrypted firmware package in some ways, can we trigger the downgrade directly?
+- Is the decryption and encryption process controlled by the client? If so, we can hook the Windows client and trigger the decryption process as we want.
 
 
 
@@ -421,9 +423,9 @@ Alternatively, I will introduce two attack surfaces.
 
 So far, we've discussed TA research on actual Android devices. Let's now shift to TA simulation.
 
- When it comes to TA simulation, Unicorn and Qemu are indispensable topics. 
+ When it comes to TA simulation, Unicorn and Qemu are indispensable topics. I chose Unicorn.
 
-### 4.1 Choosing: Qiling Framework or Secondary Development Based on Unicorn
+### 4.1 Choosing: Qiling Framework or Develop My Own Framework Based on Unicorn
 
 - **Option 1:** Qiling Framework is developed based on Unicorn. It is currently very mature, providing many necessary functions to help developers quickly simulate and fuzz.
 
@@ -460,15 +462,15 @@ The solution was to manually patch the TA with the `Crash Patch Handler`, such a
 - Some TAs in TEEs rely on imported functions from external shared objects (so).
 - These shared objects are part of the TEE system and do not exist in the Android file system; instead, they are packaged together with the TEEOS image.
 - If we want to analyze and redirect these imported functions, we first need to crack the special format of the TEEOS image and extract the complete shared library.
-- However, the special format of TEEOS makes this analysis too cumbersome. Is there a simpler way?
+- However, my research involves many mainstream Android OEMs. If I had to break them one by one, it would cost me a lot of time. I conduct the research on my own. Is there a simpler way?
 
-**Yes, we can start by identifying the assembly characteristics.**
+**Yes, we can start by identifying the assembly patterns.**
 
 **To be honest, I did the research on my own, and there is too much work that needs to be done by myself. Therefore, if there is an easier way to solve a problem, I will always choose the simpler method.**
 
 
 
-##### 4.2.2.1 Redirection of Imported Functions ： OP-TEE
+**1. Redirection of Imported Functions ： OP-TEE**
 
 - The TA format of OP-TEE is special, and all functions are inlined. Therefore, we only need to focus on the interception and implementation of syscalls.
 - The assembly code that invokes syscalls has distinct characteristics.
@@ -477,18 +479,18 @@ The solution was to manually patch the TA with the `Crash Patch Handler`, such a
 
 
 
-##### 4.2.2.2 Redirection of Imported Functions ： TAs with Few External Dependencies
+**2. Redirection of Imported Functions ： TAs with Few External Dependencies**
 
 - Some TAs are highly encapsulated and rely on only a limited number of external functions, usually just 5 to 10, which can be handled by scripts or manually. 
-- These externam function calls follow the address resolution strategy of the Got and PLT tables.
+- These externam function calls follow the address resolution strategy of the `GOT` and `PLT` tables.
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-173215@2x.png)
 
-#### 4.2.2.3 Redirection of Imported Functions ： TAs with Extensive External Dependencies
+**3. Redirection of Imported Functions ： TAs with Extensive External Dependencies**
 
 - Examples: MiTEE and Samsung TEE 
 - Similar to programs on Linux, they rely on `libc` and make extensive use of basic functions like `printf` and `strcpy`. 
-- To harden them, we need to reverse engineer and decompress the TEEOS, obtain the original dependency library, and reanalyze and redirect the dependencies. 
+- We need to reverse engineer and decompress their TEEOSs, obtain the original dependency libraries, analyze and redirect the dependencies. 
 - For the sake of fuzzing efficiency, the lazy loading of shared objects needs to be modified to immediate loading.
 
 ## 5. Fuzzing of TAs
@@ -522,12 +524,12 @@ The reason for this behavior is that the memory allocation uses real-time `mmap`
 
 **My fix is straightforward:** 
 
-- pre-allocate the heap area during the Unicorn initialization phase, for example, from `0x10000000` to `0x40000000`. 
+- pre-allocate the heap area during the Unicorn initialization process, for example, from `0x10000000` to `0x40000000`. 
 - This way, we can allocate memory blocks of any size.
 
 
 
-## 5.3 A Patch To `free()`
+## 5.3 A Patch To free()
 
 [https://github.com/Battelle/afl-unicorn/blob/master/unicorn_mode/helper_scripts/unicorn_loader.py#L129](https://github.com/Battelle/afl-unicorn/blob/master/unicorn_mode/helper_scripts/unicorn_loader.py#L129)
 
@@ -571,7 +573,7 @@ Initially, I conducted basic research on the TA and found that many TAs have onl
 
 This brute-force approach was effective, and I did use it to find some vulnerabilities. 
 
-However, it has significant drawbacks:
+**However, it has significant drawbacks:**
 
 - It dramatically lowers fuzzing efficiency, makes deduplication difficult, and makes it challenging to pinpoint which input data caused a crash.
 
@@ -588,7 +590,11 @@ I didn't find the vulnerability when I used the default fuzzing strategy. And wh
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-180253@2x.png)
 
-The exploit required first calling `command13`,  insert a fully controllable `keyblock` structure into the `rpmb`. Then, invoking `command12` would cause the TA to read the `keyblock` structure from `rpmb` . The lack of proper validation for the copy loop length resulted in a buffer overflow.
+The exploit required first calling `command13`,  insert a `keyblock` structure into the `rpmb`. 
+
+Then, invoking `command12` would cause the TA to read the `keyblock` structure from `rpmb` . 
+
+The lack of proper validation for the copy loop length resulted in a buffer overflow.
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-180534@2x.png)
 
@@ -598,9 +604,11 @@ This case is a classic example where the exploitation of `command12` depends on 
 
 ## 6. Attack surfaces of TAs
 
-Next, let's delve into the analysis of the TA attack surface. 
+Next, let's delve into the analysis of the TA attack surface.
 
+**I have to omit the demonstration of these vulnerabilities and cannot disclose their details completely due to the vulnerability disclosure policies of the Android OEMs.**
 
+So, in this section, I will focus on sharing my experience.
 
 ### 6.1 Type Confusion
 
@@ -610,15 +618,15 @@ As mentioned earlier, TAs following the GP standard use the `TEE_Param` structur
 
 This structure can handle various data types, including both `values` and `buffers`.
 
-This flexibility means **developers must diligently verify** the legitimacy of the external input data types.
+This flexibility means **developers must verify the legitimacy of the external input data carefully.**
 
-Failure to do so can lead to type confusion issues, treating values as buffers or vice versa.
+Failure to do so can lead to type confusion vulnerabilities, treating values as buffers or vice versa.
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-180805@2x.png)
 
 Unfortunately, in my research, this vulnerability was ubiquitous. 
 
-Any manufacturer's TA that followed the GP standard had at least one or more instances of this vulnerability. 
+As long as a manufacturer's TA follows the GP standard, there will be at least one or more instances of type confusion vulnerabilities in their TAs.
 
 These vulnerabilities are straightforward to discover and fix, especially with Fuzzing. 
 
@@ -626,9 +634,9 @@ These vulnerabilities are straightforward to discover and fix, especially with F
 
 **Root Causes, in My Opinion:**
 
-- The TEE grants developers excessive authority, allowing TAs to accept and process external parameter types, thereby exposing potential risks.
+- The GP standard grants TA developers excessive authority, allowing them to decide how the TA receives and processes external inputs, thereby exposing potential risks.
 - From the perspectives of development efficiency and ease of use, this strategy appears sound.
-- However, it places high demands on developers. If developers do not thoroughly understand the parameter types or make assumptions about TA requests, and they handle external input unsafely, severe security issues can arise.
+- However, it places high demands on developers. If developers do not thoroughly understand the `paramtypes`, and handle external input unsafely, severe security issues can arise.
 - For most private TEEs developed by OEMs, I believe it is not necessary to strictly follow the GP standard. It is feasible to eliminate these risky attack surfaces appropriately.
 
 
@@ -657,7 +665,7 @@ Now, returning to classic binary exploitation issues, let's consider a typical s
 
 ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-182208@2x.png)
 
-When conducting security research on vendors' fingerprint and facial recognition TAs, I discovered some very peculiar attack points. The code for these biometric TAs on Android phones is not always written by the phone manufacturers themselves but often comes from the developers of the fingerprint modules. While the phone manufacturers' code usually adheres to certain security baselines, penetration testing, and SDL, the code from the module developers does not. This results in numerous vulnerabilities in the fingerprint and facial recognition TAs used on many phones. 
+When conducting security research on vendors' fingerprint and facial recognition TAs, I discovered some very peculiar cases. The code for these biometric TAs on Android phones is not always written by the phone manufacturers themselves but often comes from the developers of the fingerprint modules. While the phone manufacturers' code usually adheres to certain security baselines, penetration testing, and SDL, the code from the module developers does not. This results in numerous vulnerabilities in the fingerprint and facial recognition TAs used on many phones. 
 
 Originally, these TAs were intended to protect users' data security, but due to the poor code quality, they end up making the phones more vulnerable to attacks, which is quite counterproductive.
 
@@ -679,13 +687,13 @@ Although this seems like a very crude strategy, that particular phone had a side
 
 Now, let's consider this from an attacker's perspective. 
 
-If we have a type confusion vulnerability that allows arbitrary memory writes, many times we need to put in a lot of effort to construct our own ROP  chain, and sometimes our exploit might not even succeed. But if our target is this type of fingerprint TA or similar TAs, we can attempt to attack these state variables directly to unlock the phone. A clear prerequisite here is that the memory page where these state variables are stored must be writable.
+If we have a type confusion vulnerability that allows arbitrary memory writes, many times we need to put in a lot of effort to construct our own ROP  chain, and sometimes our exploit might not even succeed.For example, a vulnerability can help us write a bit 0 to arbitrary address, off by 1 and etc.. But if our target is fingerprint TA or similar TAs, we can attempt to attack these state variables directly to unlock the phone. A clear prerequisite here is that the memory page where these state variables are stored must be writable.
 
 
 
 ## 6.3 Information leakage
 
-- Vulnerability
+- Vulnerabilities
   - ![General Architecture](/images/2024-05-29-Dive-Into-Android-TA-BugHunting-And-Fuzzing/WX20240529-183256@2x.png)
 - Logs
   - Check `/proc` or `cat /proc/kmsg`
@@ -733,7 +741,7 @@ These verification processes occur within TEE, ensuring security even if the REE
 I categorize Keystore's user identity authentication strategies into two types, both ensuring data security even if Android's root access is compromised.
 
 - User verifies fingerprint or PIN code, TA returns a true or false result and saves the current authorization time.   
-  - Later, when the user triggers data decryption again, the TA checks if the authorization time has exceeded a certain threshold (e.g., 500 or 1000 seconds). Only if it is within the valid time frame will it decrypt the data and then return the decryption result to the REE's CA. 
+  - Later, when the user triggers data decryption again, the TA checks if the authorization time has exceeded a certain threshold (e.g., 500 or 1000 micro seconds). Only if it is within the valid time frame will it decrypt the data and then return the decryption result to the REE's CA. 
 
 - User verifies fingerprint or PIN code:   
   - If the verification passes, it triggers the `onAuthenticationSucceeded` callback, and the TEE returns the secondary encrypted decryption key to the REE. The REE then sends the encrypted key and ciphertext back to the TEE for decryption. 
@@ -786,7 +794,7 @@ Similarly, for Web3 security wallets, this vulnerability must also be addressed.
 
 ## 6.5 Jumper
 
-When we research TAs, we often find that we only have ordinary `adb shell` permissions or normal app permissions. But only system-level apps can call the Android TEE driver. This means that we can't directly talk to the TA we want. 
+When we research TAs, we often find that we only have `adb shell` permissions or untrusted app permissions. But only system-level apps can call the Android TEE driver. This means that we can't directly talk to the TA we want. 
 
 However, let's think outside the box. TAs are built for using, and some TAs have no permission restrictions due to business needs, this means that any third-party app can directly communicate with the target TA through the interfaces exposed by the pre-installed CA on the Android side, without needing to communicate with the TEE driver.
 
@@ -834,3 +842,11 @@ And Race conditions in multi-instance TAs interacting with the same file are als
 # The End
 
 Thanks for reading.
+
+As we can see above, I cannot disclose the details of these vulnerabilities due to the limitations of the vulnerability disclosure policy of the Android OEMs. If they offered big bounties, I might find it acceptable, but they do not.
+
+If I have the ability to research other high-value products, why would I continue researching these low-value products that do not prioritize security and only use it as a marketing gimmick?
+
+
+
+So far, my experience with vulnerability research on Apple products has been good. I'm glad to see that.
